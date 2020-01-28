@@ -4,7 +4,14 @@ Update：2020.01.29
 Translator：[shendeguize@github](
 https://github.com/shendeguize)
 
+Link: [
+https://github.com/shendeguize/GooglePythonStyleGuideCN](
+https://github.com/shendeguize/GooglePythonStyleGuideCN)
+
 本翻译囿于水平，可能有不准确的地方，欢迎指出，谢谢大家
+
+*如有引用,请注明出处*
+
 ## 1 背景
 Python是谷歌主要是用的动态语言，本风格指导列举了使用Python编程时应该做和不该做的事项(dos & don'ts)
 
@@ -468,4 +475,4 @@ def foo(a, b: Mapping = {}):  # Could still get passed to unchecked code 仍可�
     ...
 ```
 
-
+**TBD**
