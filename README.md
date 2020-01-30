@@ -642,7 +642,8 @@ def get_adder(summand1):
 可能会导致令人迷惑的bug例如这个基于[PEP-0227](http://www.google.com/url?sa=D&q=http://www.python.org/dev/peps/pep-0227/)的例子.
 
 ```Python
-i = 4def foo(x):
+i = 4
+def foo(x):
     def bar():
         print(i, end='')
     # ...
