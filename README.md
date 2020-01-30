@@ -454,10 +454,10 @@ bad_line_breaking = ('yes' if predicate(value) else
 ```Python
 def foo(a, b=None):
     if b is None:
-             b = []
+        b = []
 def foo(a, b: Optional[Sequence] = None):
     if b is None:
-             b = []
+        b = []
 def foo(a, b: Sequence = ()):  # Empty tuple OK since tuples are immutable 空元组是也不可变的
     ...
 ```
@@ -781,7 +781,7 @@ a = SomeFunc()  # type: SomeType
 #### 2.21.4 建议
 强烈鼓励在更新代码的时候进行Python类型分析.在对公共API进行补充和修改时,包括python类型声明并通过构建系统中的pytype进行检查.对Python来说静态类型检查比较新,我们承认,一些意料外的副作用(例如错误推断的类型)可能拒绝一些项目的使用.这种情况下,鼓励作者适当地增加一个带有TODO或到bug描述当前不接搜的类型注释的链接到BUILD文件或者在代码内.
 
-
+## 3 Python代码风格规范
 
 
 
