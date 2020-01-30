@@ -1,5 +1,5 @@
 # 谷歌Python代码风格指南 中文翻译
-Update: 2020.01.30
+Update: 2020.01.31
 
 Translator: [shendeguize@github](
 https://github.com/shendeguize)
@@ -784,7 +784,448 @@ a = SomeFunc()  # type: SomeType
 
 ## 3 Python代码风格规范
 
+### 3.1 分好
+不要在行尾加分号，也不要用分号把两行语句合并到一行
 
+### 3.2 行长度
+最大行长度是*80个字符*
 
+超出80字符的明确例外:
+* 长import
+* 注释中的：URL,路径,flags等
+* 不包含空格不方便分行的模块级别的长字符串常量
+* pylint的diable注释使用(如`# pylint: disable=invalid-name`)
 
-### **TBD**
+不要使用反斜杠连接,除非对于需要三层或以上的上下文管理器`with`语句
+
+利用Python的[implicit line joining inside parentheses, brackets and braces](http://docs.python.org/reference/lexical_analysis.html#implicit-line-joining)(隐式行连接方法--括号连接,包括`(), [], {}`).如果必要的话,也可在表达式外面额外添加一对括号.
+
+**Yes:**
+
+```Pyhon
+foo_bar(self, width, height, color='black', design=None, x='foo',
+        emphasis=None, highlight=0)
+
+if (width == 0 and height == 0 and
+    color == 'red' and emphasis == 'strong'):
+```
+
+当字符串不能在一行内完成时,使用括号来隐式连接行:
+
+```Python
+x = ('This will build a very long long '
+     'long long long long long long string')
+```
+
+在注释内,如有必要,将长URL放在其本行内:
+
+**Yes:**
+
+```Python
+# See details at
+# http://www.example.com/us/developer/documentation/api/content/v2.0/csv_file_name_extension_full_specification.html
+```
+
+**No:**
+
+```Python
+# See details at
+# http://www.example.com/us/developer/documentation/api/content/\
+# v2.0/csv_file_name_extension_full_specification.html
+```
+
+在定义一个表达式超过三行或更多的`with`语句时,可以使用反斜杠来分行.对于两行表达式,使用嵌套`with`语句:
+
+**Yes:**
+
+```Python
+with very_long_first_expression_function() as spam, \
+     very_long_second_expression_function() as beans, \
+     third_thing() as eggs:
+    place_order(eggs, beans, spam, beans)
+
+with very_long_first_expression_function() as spam:
+    with very_long_second_expression_function() as beans:
+        place_order(beans, spam)
+```
+
+**No:**
+```Python
+with VeryLongFirstExpressionFunction() as spam, \
+     VeryLongSecondExpressionFunction() as beans:
+    PlaceOrder(eggs, beans, spam, beans)
+```
+
+注意上述例子中的缩进,具体参看[缩进](https://google.github.io/styleguide/pyguide.html#s3.4-indentation)
+
+在其他一行超过80字符的情况下,而且[yapf](https://github.com/google/yapf/)自动格式工具也不能使分行符合要求时,允许超过80字符限制.
+
+### 3.3 括号
+括号合理使用
+
+尽管不必要,但是可以在元组外加括号.再返回语句或者条件语句中不要使用括号,除非是用于隐式的连接行或者指示元组.
+
+**Yes:**
+
+```Python
+if foo:
+    bar()
+while x:
+    x = bar()
+if x and y:
+    bar()
+if not x:
+    bar()
+# For a 1 item tuple the ()s are more visually obvious than the comma.
+onesie = (foo,)
+return foo
+return spam, beans
+return (spam, beans)
+for (x, y) in dict.items(): ...
+```
+
+**No:**
+
+```Python
+if (x):
+    bar()
+if not(x):
+    bar()
+return (foo)
+```
+
+### 3.4 缩进
+缩进用4个空格
+
+缩进代码段不要使用制表符,或者混用制表符和空格.如果连接多行,多行应垂直对齐,或者再次4空格缩进(这个情况下首行括号后应该不包含代码).
+
+**Yes:**
+
+```Python
+# Aligned with opening delimiter
+# 和opening delimiter对齐(译者理解是分隔符的入口,例如三种括号,字符串引号等)
+foo = long_function_name(var_one, var_two,
+                         var_three, var_four)
+meal = (spam,
+        beans)
+
+# Aligned with opening delimiter in a dictionary
+foo = {
+    long_dictionary_key: value1 +
+                         value2,
+    ...
+}
+
+# 4-space hanging indent; nothing on first line
+# 缩进4个空格,首行括号后无内容
+foo = long_function_name(
+    var_one, var_two, var_three,
+    var_four)
+meal = (
+    spam,
+    beans)
+
+# 4-space hanging indent in a dictionary
+foo = {
+    long_dictionary_key:
+        long_dictionary_value,
+    ...
+}
+```
+
+**No:**
+```Python
+# Stuff on first line forbidden
+# 首行不允许有内容
+foo = long_function_name(var_one, var_two,
+    var_three, var_four)
+meal = (spam,
+    beans)
+
+# 2-space hanging indent forbidden
+foo = long_function_name(
+  var_one, var_two, var_three,
+  var_four)
+
+# No hanging indent in a dictionary
+foo = {
+    long_dictionary_key:
+    long_dictionary_value,
+    ...
+}
+```
+
+#### 3.4.1 关于尾后逗号
+关于在一序列元素中的尾号逗号,只推荐在容器结束符号`]`,`)`或者`}`和最后元素不在同一行时使用.尾后逗号的存在也被用作我们Python代码自动格式化工具[yapf](https://github.com/google/yapf/)的提示,在`,`最后元素之后出现的时候来自动调整容器元素到每行一个元素.
+
+**Yes:**
+
+```Python
+golomb3 = [0, 1, 3]
+golomb4 = [
+    0,
+    1,
+    4,
+    6,
+]
+```
+
+**No:**
+
+```Python
+golomb4 = [
+    0,
+    1,
+    4,
+    6
+]
+```
+### 3.5 空行
+在顶级定义(函数或类)之间要间隔两行.在方法定义之间以及`class`所在行与第一个方法之间要空一行,`def`行后无空行,在函数或方法内你认为合适地方可以使用单空行.
+
+### 3.6 空格
+遵守标准的空格和标点排版规则.
+
+括号`()`,`[]`,`{}`内部不要多余的空格.
+
+**Yes:**
+
+```Python
+spam(ham[1], {eggs: 2}, [])
+```
+
+**No:**
+
+```Python
+spam( ham[ 1 ], { eggs: 2 }, [ ] )
+```
+
+ 逗号、分号、冒号前不要空格,但是在后面要加空格,除非是在行尾.
+ 
+**Yes:**
+
+```Python
+if x == 4:
+    print(x, y)
+x, y = y, x
+```
+
+**No:**
+
+```Python
+if x == 4 :
+    print(x , y)
+x , y = y , x
+```
+
+在函数调用括号的前,索引切片括号前都不加空格.
+
+**Yes:**
+
+```Python
+spam(1)
+dict['key'] = list[index]
+```
+
+**No:**
+
+```Python
+spam (1)
+dict ['key'] = list [index]
+```
+
+ 行尾不要加空格.
+ 
+ 
+在赋值(`=`),比较(`==`,`<`,`>`,`!=`,`<>`,`<=`,`>=`,`in`,`not in`,`is`,`is not`),布尔符号(`and`,`or`,`not`)前后都加空格.视情况在算术运算符(`+`,`-`,`*`,`/`,`//`,`%`,`**`,`@`),前后加空格
+
+**Yes:**
+
+```Python
+x == 1
+```
+
+**No:**
+
+```Python
+x<1
+```
+
+在关键字名参数传递或定义默认参数值的时候不要在`=`前后加空格,只有一个例外:[当类型注释存在时](https://google.github.io/styleguide/pyguide.html#typing-default-values)在定义默认参数值时`=`前后加空格
+
+**Yes:**
+
+```Python
+def complex(real, imag=0.0): return Magic(r=real, i=imag)
+def complex(real, imag: float = 0.0): return Magic(r=real, i=imag)
+```
+
+**No:**
+
+```Python
+def complex(real, imag = 0.0): return Magic(r = real, i = imag)
+def complex(real, imag: float=0.0): return Magic(r = real, i = imag)
+```
+
+不要用空格来做无必要的对齐,因为这会在维护时带来不必哟的负担(对于`:`.`#`,`=`等等).
+
+**Yes:**
+
+```Python
+foo = 1000  # comment
+long_name = 2  # comment that should not be aligned
+dictionary = {
+    'foo': 1,
+    'long_name': 2,
+}
+```
+
+**No:**
+
+```Python
+foo       = 1000  # comment
+long_name = 2     # comment that should not be aligned
+
+dictionary = {
+    'foo'      : 1,
+    'long_name': 2,
+}
+```
+
+### 3.7 Shebang
+大部分`.py`文件不需要从`#!`行来开始.根据[PEP-394](https://www.google.com/url?sa=D&q=http://www.python.org/dev/peps/pep-0394/),程序的主文件应该以`#!/usr/bin/python2`或`#!/usr/bin/python3`起始
+
+这行被用于帮助内核找到Python解释器,但是在导入模块时会被Python忽略/只在会被直接运行的文件里有必要写.
+
+### 3.8 注释和文档字符串
+确保使用正确的模块,函数,方法的文档字符串和行内注释.
+
+#### 3.8.1 文档字符串
+Python使用*文档字符串*来为代码生成文档.文档字符串是包,模块,类活函数的首个语句.这些字符串能够自动被`__doc__`成员方法提取并且被`pydoc`使用.(尝试在你的模块上运行`pydoc`来看看具体是什么).文档字符串使用三重双引号`"""`(根据[PEP-257](https://www.google.com/url?sa=D&q=http://www.python.org/dev/peps/pep-0257/)).文档字符串应该这样组织:一行总结(或整个文档字符串只有一行)并以句号,问好或感叹号结尾.随后是一行空行,随后是文档字符串,并与第一行的首个引号位置相对齐.更多具体格式规范如下.
+
+#### 3.8.2 模块
+每个文件都应包含许可模板.选择合适的许可模板用于项目(例如
+Apache 2.0,BSD,LGPL,GPL)
+
+文档应该以文档字符串开头,并描述模块的内容和使用方法.
+
+```Python
+"""A one line summary of the module or program, terminated by a period.
+
+Leave one blank line.  The rest of this docstring should contain an
+overall description of the module or program.  Optionally, it may also
+contain a brief description of exported classes and functions and/or usage
+examples.
+
+  Typical usage example:
+
+  foo = ClassFoo()
+  bar = foo.FunctionBar()
+"""
+```
+
+#### 3.8.3 函数和方法
+在本节,"函数"所指包括方法,函数或者生成器.
+
+函数应有文档字符串,除非符合以下所有条件:
+* 外部不可见
+* 非常短
+* 简明
+
+文档字符串应该包含足够的信息以在无需阅读函数代码的情况下调用函数.文档字符串应该是叙事体(`"""Fetches rows from a Bigtable."""`)的而非命令式的(`"""Fetch rows from a Bigtable."""`),除了`@property`(应与[attribute](https://google.github.io/styleguide/pyguide.html#384-classes)使用同样的风格).文档字符串应描述函数的调用语法和其意义,而非实现.对比较有技巧的地方,在代码中使用注释更合适.
+
+覆写了基类的方法可有简单的文档字符串向读者指示被覆写方法的文档字符串例如`"""See base class."""`.这是因为没必要在很多地方重复已经在基类的文档字符串中存在的文档.不过如果覆写的方法行为实际上与被覆写方法不一致,或者需要提供细节(例如文档中表明额外的副作用),覆写方法的文档字符串至少要提供这些差别.
+
+一个函数的不同方面应该在特定对应的分节里写入文档,这些分节如下.每一节都由以冒号结尾的一行开始, 每一节除了首行外,都应该以2或4个空格缩进并在整个文档内保持一致(译者建议4个空格以维持整体一致).如果函数名和签名足够给出足够信息并且能够刚好被一行文档字符串所描述,那么可以忽略这些节.
+
+[***Args:***](https://google.github.io/styleguide/pyguide.html#doc-function-args)
+
+    列出每个参数的名字.名字后应有为冒号和空格,后跟描述.如果描述太长不能够在80字符的单行内完成.那么分行并缩进2或4个空格且与全文档一致(译者同样建议4个空格)
+    
+    描述应该包含参数所要求的类型,如果代码不包含类型注释的话.如果函数容许`*foo`(不定长度参数列表)或`**bar`(任意关键字参数).那么就应该在文档字符串中列举为`*foo`和`**bar`.
+    
+[***Returns:(或对于生成器是Yields:)***](https://google.github.io/styleguide/pyguide.html#doc-function-returns)
+    描述返回值的类型和含义.如果函数至少返回None,这一小节不需要.如果文档字符串以Returns或者Yields开头(例如`"""Returns row from Bigtable as a tuple of strings."""`)或首句足够描述返回值的情况下这一节可忽略.
+    
+[***Raises:***](https://google.github.io/styleguide/pyguide.html#doc-function-returns)
+    列出所有和接口相关的异常.对于违反文档要求而抛出的异常不应列出.(因为这会矛盾地使得违反接口要求的行为成为接口的一部分)
+
+```Python
+def fetch_bigtable_rows(big_table, keys, other_silly_variable=None):
+    """Fetches rows from a Bigtable.
+
+    Retrieves rows pertaining to the given keys from the Table instance
+    represented by big_table.  Silly things may happen if
+    other_silly_variable is not None.
+
+    Args:
+        big_table: An open Bigtable Table instance.
+        keys: A sequence of strings representing the key of each table row
+            to fetch.
+        other_silly_variable: Another optional variable, that has a much
+            longer name than the other args, and which does nothing.
+
+    Returns:
+        A dict mapping keys to the corresponding table row data
+        fetched. Each row is represented as a tuple of strings. For
+        example:
+
+        {'Serak': ('Rigel VII', 'Preparer'),
+         'Zim': ('Irk', 'Invader'),
+         'Lrrr': ('Omicron Persei 8', 'Emperor')}
+
+        If a key from the keys argument is missing from the dictionary,
+        then that row was not found in the table.
+
+    Raises:
+        IOError: An error occurred accessing the bigtable.Table object.
+    """
+```
+
+#### 3.8.4 类
+类定义下一行应为描述这个类的文档字符串.如果类有公共属性,应该在文档字符串中的`Attributes`节中注明,并且和[函数的`Args`](https://google.github.io/styleguide/pyguide.html#doc-function-args)一节风格统一.
+
+```Python
+class SampleClass(object):
+    """Summary of class here.
+
+    Longer class information....
+    Longer class information....
+
+    Attributes:
+        likes_spam: A boolean indicating if we like SPAM or not.
+        eggs: An integer count of the eggs we have laid.
+    """
+
+    def __init__(self, likes_spam=False):
+        """Inits SampleClass with blah."""
+        self.likes_spam = likes_spam
+        self.eggs = 0
+
+    def public_method(self):
+        """Performs operation blah."""
+```
+
+#### 3.8.5 块注释和行注释
+最后要在代码中注释的地方是代码技巧性的部分.如果你将要在下次[code review](http://en.wikipedia.org/wiki/Code_review)中揭示代码.应该现在就添加注释.在复杂操作开始前,注释几行.对于不够明晰的代码在行尾注释.
+
+```Python
+# We use a weighted dictionary search to find out where i is in
+# the array.  We extrapolate position based on the largest num
+# in the array and the array size and then do binary search to
+# get the exact number.
+if i & (i-1) == 0:  # True if i is 0 or a power of 2.
+```
+
+为了提升易读性,行注释应该至少在代码2个空格后,并以`#`后接至少1个空格开始注释部分.
+
+另外,不要描述代码,假定阅读代码的人比你更精通Python(他只是不知道你试图做什么).
+
+#### 3.8.6 标点,拼写和语法
+注意标点,拼写和语法,写得好的注释要比写得差的好读.
+
+注释应当是和叙事性文本一样可读,并具有合适的大小写和标点.在许多情况下,完整的句子要比破碎的句子更可读.更简短的注释如行尾的注释有时会不太正式,但是应该全篇保持风格一致.
+
+尽管被代码审核人员指出在应该使用分号的地方使用了逗号是很令人沮丧的,将源代码维护在高度清楚可读的程度是很重要的.合适的标点,拼写和语法能够帮助达到这个目标.
+
+# To Be Continued
