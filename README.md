@@ -1,7 +1,7 @@
 # 谷歌Python代码风格指南 中文翻译
-Update：2020.01.29
+Update: 2020.01.30
 
-Translator：[shendeguize@github](
+Translator: [shendeguize@github](
 https://github.com/shendeguize)
 
 Link: [
@@ -488,7 +488,302 @@ def foo(a, b: Mapping = {}):  # Could still get passed to unchecked code 仍可�
 在Python2中必须继承于`object`,可能会隐藏像是操作符重载之类的副作用.对于子类而言,属性可能有些迷惑性.
 
 #### 2.13.4 建议
+在通常会有简单而且轻量级的访问和设定方法的新代码里使用属性来访问或设定数据.属性在创建时被`@property`装饰,参加[装饰器](https://google.github.io/styleguide/pyguide.html#s2.17-function-and-method-decorators)
+
+如果属性本身未被重写,带有属性的继承可能不够明晰,因而必须确保访问方法是被间接访问的,来确保子类的方法重载是被属性调用的(使用Template Method DP,译者:应是模板方法设计模式).
+
+**Yes:**
+
+```Python
+class Square(object):
+    """A square with two properties: a writable area and a read-only perimeter.
+
+    To use:
+    >>> sq = Square(3)
+    >>> sq.area
+    9
+    >>> sq.perimeter
+    12
+    >>> sq.area = 16
+    >>> sq.side
+    4
+    >>> sq.perimeter
+    16
+    """
+
+    def __init__(self, side):
+        self.side = side
+
+    @property
+    def area(self):
+        """Area of the square."""
+        return self._get_area()
+
+    @area.setter
+    def area(self, area):
+        return self._set_area(area)
+
+    def _get_area(self):
+        """Indirect accessor to calculate the 'area' property."""
+        return self.side ** 2
+
+    def _set_area(self, area):
+        """Indirect setter to set the 'area' property."""
+        self.side = math.sqrt(area)
+
+    @property
+    def perimeter(self):
+        return self.side * 4
+```
+
+### 2.14 True/Flase表达式
+只要可能,就使用隐式False的if语句
+
+#### 2.14.1 定义
+在布尔环境下,Python对某些值判定为False,一个快速的经验规律是所有"空"值都被认为是False,所以`0, None, [], {}, ''`的布尔值都是False
+
+#### 2.14.2 Pros
+使用Python布尔类型的条件语句可读性更好而且更难出错,大多数情况下,这种方式也更快.
+
+#### 2.14.3 Cons
+对于C/C++开发者而言可能有些奇怪
+
+#### 建议
+如果可能的话,使用隐式False.例如使用`if foo:`而非`if foo != []:`下面列举了一些你应该牢记的警告:
+
+* 使用`if foo is None`(或者`if foo is not None`)来检查`None`.例如在检查一个默认值是`None`的变量或者参数是否被赋予了其他值的时候,被赋予的其他值的布尔值可能为False.
+* 不要用`==`来和布尔值为`False`的变量比较,使用`if not x`,如果需要区别`False`和`None`,那么使用链式的表达式如`if not x and x is not None`
+* 对于序列(如字符串,列表,元组),利用空序列为`False`的事实,故而相应地使用`if seq:`和`if not seq:`而非`if len(seq)`或`if not len(seq):`.
+* 在处理整数时,隐式的False可能会引入更多风险(例如意外地将`None`和0进行了相同的处理)你可以用一个已知是整形(并且不是`len()`的结果)的值和整数0比较.
+
+**Yes:**
+
+```Python
+if not users:
+    print('no users')
+
+if foo == 0:
+    self.handle_zero()
+
+if i % 10 == 0:
+    self.handle_multiple_of_ten()
+
+def f(x=None):
+    if x is None:
+        x = []
+```
+
+**No:**
+
+```Python
+if len(users) == 0:
+    print('no users')
+
+if foo is not None and not foo:
+    self.handle_zero()
+
+if not i % 10:
+    self.handle_multiple_of_ten()
+
+def f(x=None):
+    x = x or []
+```
+
+### 2.15 弃用的语言特性
+尽可能利用字符串方法而非`string`模块.使用函数调用语法而非`apply`.在函数参数本就是一个行内匿名函数的时候,使用列表推导表达式和for循环而非`filter`和`map`
+
+#### 2.15.1 定义
+当前Python版本提供了人们普遍更倾向的构建方式.
+
+#### 2.15.2 建议
+我们不是用任何不支持这些特性的Python版本,因而没有理由使用新方式.
+
+**Yes:**
+
+```Python
+words = foo.split(':')
+
+[x[1] for x in my_list if x[2] == 5]
+
+map(math.sqrt, data)    # Ok. No inlined lambda expression. 可以,没有行内的lambda表达式
+
+fn(*args, **kwargs)
+```
+
+**No:**
+```Python
+words = string.split(foo, ':')
+
+map(lambda x: x[1], filter(lambda x: x[2] == 5, my_list))
+
+apply(fn, args, kwargs)
+```
+
+### 2.16 词法作用域
+可以使用
+
+#### 2.16.1 定义
+一个内嵌Python函数可以引用在闭包命名空间内定义的变量,但是不能对其复制.变量绑定是解析到使用词法作用域的,即基于静态程序文本.任何对块内命名的赋值都会让Python将对于这个命名的引用都作为局部变量,即使在使用先于赋值的情况下也是.如果有全局声明,这个命名就会被认为是全局变量.
+
+一个使用这个特性的例子是:
+```Python
+def get_adder(summand1):
+    """Returns a function that adds numbers to a given number."""
+    def adder(summand2):
+        return summand1 + summand2
+
+    return adder
+```
+
+#### 2.16.2 Pros
+经常可以让代码更简明优雅,尤其会让有经验的Lisp和Scheme(以及Haskell和ML还有其他)的程序要很舒服.
+
+#### 2.16.3 Cons
+可能会导致令人迷惑的bug例如这个基于[PEP-0227](http://www.google.com/url?sa=D&q=http://www.python.org/dev/peps/pep-0227/)的例子.
+
+```Python
+i = 4def foo(x):
+    def bar():
+        print(i, end='')
+    # ...
+    # A bunch of code here
+    # ...
+    for i in x:  # Ah, i *is* local to foo, so this is what bar sees i对于foo来说是局部变量,所以在这里就是bar函数所获取的值
+        print(i, end='')
+    bar()
+```
+
+所以`foo([1, 2, 3])`会打印`1 2 3 3`而非`1 2 3 4`.
+
+#### 2.16.4 建议
+可以使用
+
+### 2.17 函数和方法装饰器
+在明显有好处时,谨慎明智的使用，避免`@staticmethod`，控制使用`@classmethod`
+
+#### 2.17.1 定义
+[函数和方法装饰器](https://docs.python.org/3/glossary.html#term-decorator)(也就是`@`记号).一个常见的装饰器是`@property`,用于将普通方法转换成动态计算属性.然而装饰器语法也允许用户定义装饰器,尤其对于一些函数`my_decorator`如下:
+
+```Python
+class C(object):
+    @my_decorator
+    def method(self):
+        # method body ...
+```
+
+是等效于
+
+```Python
+class C(object):
+    def method(self):
+        # method body ...
+    method = my_decorator(method)
+```
+
+#### 2.17.2 Pros
+能够优雅的对方法进行某种转换,而该转换可能减少一些重复代码并保持不变性等等.
+
+#### 2.17.3 Cons
+装饰器可以对函数的参数和返回值任意操作,导致非常隐形的操作行为.此外,装饰器在import的时候就被执行,装饰器代码的实效可能非常难恢复.
+
+### 2.17.4 建议
+在有明显好处的地方谨慎地使用装饰器.装饰器应该和函数遵守相同的import和命名指导规则.装饰器的文档应该清晰地声明该函数为装饰器函数.并且要为装饰器函数编写单元测试.
+
+避免装饰器自身对外部的依赖,(如不要依赖于文件,socket,数据库连接等等),这是由于在装饰器运行的时候(在import时,可能从`pydoc`或其他工具中)这些外部依赖可能不可用.一个被传入有效参数并调用的装饰器应该(尽可能)保证在任何情况下都可用.
+
+装饰器是一种特殊的"顶级代码",参见[main](https://google.github.io/styleguide/pyguide.html#s3.17-main)
+
+永远不要使用`@staticmethod`,除非不得不整合一个API到一个已有的库,应该写一个模块等级的函数.
+
+只在写一个命名的构造器或者一个类特定的,修改必要的全局状态(例如进程缓存等)的流程时使用`@classmethod`.
+
+### 2.18 线程
+不要依赖于内建类型的原子性
+
+尽管Python内置数据类型例如字典等似乎有原子性操作,仍有一些罕见情况下,他们是非原子的(比如,如果`__hash__`或者`__eq__`被实现为Python方法),就不应该依赖于这些类型的原子性.也不应该依赖于原子变量赋值(因为这依赖于字典)
+
+优先使用Queue模块的`Queue`类来作为线程之间通讯数据的方式.此外,要是用threading模块和其locking primitives(锁原语).了解条件变量的合理用法以便于使用`threading.Condition`而非使用更低级的锁.
+
+### 2.19 过于强大的特性
+尽量避免使用
+
+#### 2.19.1 定义
+Python是一种非常灵活的语言并且提供了很多新奇的特性,诸如定制元类,访问字节码,动态编译,动态继承,对象父类重定义,import hacks,反射(例如一些对于`getattr()`的应用),系统内置的修改等等.
+
+#### 2.19.2 Pros
+这些是非常强大的语言特性,可以让程序更紧凑
+
+#### 2.19.3 Cons
+使用这些新特性是很诱人的.但是并不绝对必要,它们很难读很难理解.也很难debug那些在底层使用了不常见的特性的代码.对于原作者而言可能不是这样,但是再次看代码的时候,可能比更长但是更直接的代码要难.
+
+#### 2.19.4 定义
+避免在代码中使用这些特性.
+
+内部使用这些特性的标准库和类是可以使用的(例如`abc.ABCMeta`,`collections.namedtuple`,和`enum`)
+
+### 2.20 新版本Python: Python3 和从`__future__`import
+Python3已经可用了(译者:目前Python2已经不受支持了),尽管不是每个项目都准备好使用Python3,所有的代码应该兼容Python3并且在可能的情况下在Python3的环境下测试.
+
+#### 2.20.1 定义
+Python3是Python的鲜明改变,当已有代码经常是Python2.7写成的,有一些简单可以做的事情来让代码对于其倾向更简明,因而可以让代码更好地在Python3下运行不用调整.
+
+#### 2.20.2 Pros
+在考虑Python3同时写代码更清晰也更容易在Python3环境下运行(只要所有依赖已就绪).
+
+#### 2.20.3 Cons
+一些人会认为默认样板有些丑,import实际不需要的特性到模块中是不常见的.
+
+#### 2.20.4 建议
+
+**from __future__ imports**
+
+鼓励使用`from __future__ import`语句.所有新代码都应该包含下述代码,而现有代码应该被更新以尽可能兼容:
+
+```Python
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+```
+
+如果你不太熟悉这些,详细阅读这些:[绝对import](https://www.python.org/dev/peps/pep-0328/),[新的`/`除法行为](https://www.python.org/dev/peps/pep-0238/),和[`print`函数](https://www.python.org/dev/peps/pep-3105/)
+
+请勿省略或移除这些import,即使在模块中他们没有在使用,除非代码只用于Python3.最好总是在所有的文档中都有从future的import,来保证不会在有人使用在后续编辑时遗忘.
+
+有其他的`from __future__`import语句,看喜好使用.我们的建议中不包含`unicode_literals`因为其并无明显优势,这是由于隐式默认的编码转换导致其在Python2.7内很多地方,必要时,大多数代码最好显式的使用`b''`和`u''`btyes和unicode字符串表示.(译者:这段翻译可能不准确)
+
+**The six, future, or past libraries**
+
+当项目需要支持Python2和3时,根据需求使用[six](https://pypi.org/project/six/),[future](https://pypi.org/project/future/)和[past](https://pypi.org/project/past/).
+
+### 2.21 带有类型注释的代码
+可以根据[PEP-484](https://www.python.org/dev/peps/pep-0484/)对Python3代码进行类型注释,并且在build时用类型检查工具例如[pytype](https://github.com/google/pytype)进行类型检查.
+
+类型注释可以在源码中或[stub pyi file](https://www.python.org/dev/peps/pep-0484/#stub-files)中.只要可能,注释就应写在源代码中.对于第三方或拓展模块使用pyi文件.
+
+#### 2.21.1 定义
+类型注释(也称为"类型提示")是用于函数或方法参数和返回值的:
+
+```Python
+def func(a: int) -> List[int]:
+```
+
+你也可以声明用一个单独的注释来声明变量的类型:
+
+```Python
+a = SomeFunc()  # type: SomeType
+```
+#### 2.21.2 Pros
+类型注释提升代码的可读性和可维护性,类型检查会将很多运行错误转化为构建错误,也减少了使用[过于强力特性](https://google.github.io/styleguide/pyguide.html#power-features)的能力.
+
+#### 2.21.3 Cons
+需要不断更新类型声明,对于认为有效的代码可能会报类型错误,使用[类型检查](https://github.com/google/pytype)可能减少使用[过于强力特性](https://google.github.io/styleguide/pyguide.html#power-features)的能力.
+
+#### 2.21.4 建议
+强烈鼓励在更新代码的时候进行Python类型分析.在对公共API进行补充和修改时,包括python类型声明并通过构建系统中的pytype进行检查.对Python来说静态类型检查比较新,我们承认,一些意料外的副作用(例如错误推断的类型)可能拒绝一些项目的使用.这种情况下,鼓励作者适当地增加一个带有TODO或到bug描述当前不接搜的类型注释的链接到BUILD文件或者在代码内.
 
 
 
-**TBD**
+
+
+
+### **TBD**
