@@ -1139,17 +1139,13 @@ examples.
 一个函数的不同方面应该在特定对应的分节里写入文档,这些分节如下.每一节都由以冒号结尾的一行开始, 每一节除了首行外,都应该以2或4个空格缩进并在整个文档内保持一致(译者建议4个空格以维持整体一致).如果函数名和签名足够给出足够信息并且能够刚好被一行文档字符串所描述,那么可以忽略这些节.
 
 [*Args:*](https://google.github.io/styleguide/pyguide.html#doc-function-args)
-
 :   列出每个参数的名字.名字后应有为冒号和空格,后跟描述.如果描述太长不能够在80字符的单行内完成.那么分行并缩进2或4个空格且与全文档一致(译者同样建议4个空格)
-    
 :   描述应该包含参数所要求的类型,如果代码不包含类型注释的话.如果函数容许`*foo`(不定长度参数列表)或`**bar`(任意关键字参数).那么就应该在文档字符串中列举为`*foo`和`**bar`.
     
 [*Returns:(或对于生成器是Yields:)*](https://google.github.io/styleguide/pyguide.html#doc-function-returns)
-
 :   描述返回值的类型和含义.如果函数至少返回None,这一小节不需要.如果文档字符串以Returns或者Yields开头(例如`"""Returns row from Bigtable as a tuple of strings."""`)或首句足够描述返回值的情况下这一节可忽略.
     
 [*Raises:*](https://google.github.io/styleguide/pyguide.html#doc-function-returns)
-
 :   列出所有和接口相关的异常.对于违反文档要求而抛出的异常不应列出.(因为这会矛盾地使得违反接口要求的行为成为接口的一部分)
 
 ```Python
