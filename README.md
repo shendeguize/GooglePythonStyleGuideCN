@@ -1,5 +1,5 @@
 # 谷歌Python代码风格指南 中文翻译
-Update: 2020.01.31
+Update: 2020.01.30
 
 Translator: [shendeguize@github](
 https://github.com/shendeguize)
@@ -1138,17 +1138,19 @@ examples.
 
 一个函数的不同方面应该在特定对应的分节里写入文档,这些分节如下.每一节都由以冒号结尾的一行开始, 每一节除了首行外,都应该以2或4个空格缩进并在整个文档内保持一致(译者建议4个空格以维持整体一致).如果函数名和签名足够给出足够信息并且能够刚好被一行文档字符串所描述,那么可以忽略这些节.
 
-[***Args:***](https://google.github.io/styleguide/pyguide.html#doc-function-args)
+[*Args:*](https://google.github.io/styleguide/pyguide.html#doc-function-args)
 
-    列出每个参数的名字.名字后应有为冒号和空格,后跟描述.如果描述太长不能够在80字符的单行内完成.那么分行并缩进2或4个空格且与全文档一致(译者同样建议4个空格)
+:   列出每个参数的名字.名字后应有为冒号和空格,后跟描述.如果描述太长不能够在80字符的单行内完成.那么分行并缩进2或4个空格且与全文档一致(译者同样建议4个空格)
     
-    描述应该包含参数所要求的类型,如果代码不包含类型注释的话.如果函数容许`*foo`(不定长度参数列表)或`**bar`(任意关键字参数).那么就应该在文档字符串中列举为`*foo`和`**bar`.
+:   描述应该包含参数所要求的类型,如果代码不包含类型注释的话.如果函数容许`*foo`(不定长度参数列表)或`**bar`(任意关键字参数).那么就应该在文档字符串中列举为`*foo`和`**bar`.
     
-[***Returns:(或对于生成器是Yields:)***](https://google.github.io/styleguide/pyguide.html#doc-function-returns)
-    描述返回值的类型和含义.如果函数至少返回None,这一小节不需要.如果文档字符串以Returns或者Yields开头(例如`"""Returns row from Bigtable as a tuple of strings."""`)或首句足够描述返回值的情况下这一节可忽略.
+[*Returns:(或对于生成器是Yields:)*](https://google.github.io/styleguide/pyguide.html#doc-function-returns)
+
+:   描述返回值的类型和含义.如果函数至少返回None,这一小节不需要.如果文档字符串以Returns或者Yields开头(例如`"""Returns row from Bigtable as a tuple of strings."""`)或首句足够描述返回值的情况下这一节可忽略.
     
-[***Raises:***](https://google.github.io/styleguide/pyguide.html#doc-function-returns)
-    列出所有和接口相关的异常.对于违反文档要求而抛出的异常不应列出.(因为这会矛盾地使得违反接口要求的行为成为接口的一部分)
+[*Raises:*](https://google.github.io/styleguide/pyguide.html#doc-function-returns)
+
+:   列出所有和接口相关的异常.对于违反文档要求而抛出的异常不应列出.(因为这会矛盾地使得违反接口要求的行为成为接口的一部分)
 
 ```Python
 def fetch_bigtable_rows(big_table, keys, other_silly_variable=None):
@@ -1229,3 +1231,118 @@ if i & (i-1) == 0:  # True if i is 0 or a power of 2.
 尽管被代码审核人员指出在应该使用分号的地方使用了逗号是很令人沮丧的,将源代码维护在高度清楚可读的程度是很重要的.合适的标点,拼写和语法能够帮助达到这个目标.
 
 # To Be Continued
+
+
+	5. 类
+	6. 字符串
+
+		1. 使用format或%,即使对于字符串对象,也要考虑使用+还是%及format
+		2. 避免使用+和+=来在循环中累加字符串,因为字符串对象是不可变的,索引会造成不必要的临时object造成额外的时间开销,使用"".join
+		3. 引号的使用应该统一,如果有字符串内有引号的,可以视情况更改以避免转义,多行字符串优先使用""",docstring也必须使用"""
+	7. 文件和socket
+
+		1. 显式地关闭文件或socket
+		2. 推荐使用with管理,不支持with的可以使用contextlib.closing()
+	8. TODO注释
+	9. import格式
+
+		1. 分行import
+		2. import应集中放在顶部,在模块注释和docstring后面,模块globals和常量前面,按照从最通用到最不通用的顺序排列分组,例如基础库,第三方库,代码库内的代码,每个组内按照字典序忽略大小写排序
+	10. 语句
+
+		1. 每行只有一条语句,对于没有else的if语句(在很简单的情况下)可以合并到一行
+	11. 访问
+
+		1. 对于琐碎又不太重要的访问函数,应用公共变量来替代访问函数,以避免额外的程序消耗,当添加了更多函数功能时,使用property来保持连续性
+		2. 此外,如果访问过于复杂,或者访问变量的消耗过大,应该使用get_foo()和set_foo()之类的函数式访问
+		3. 如果过去的访问方式是property,新访问函数不要绑定到property上,这样使用property的旧方式就会失效,使用者就会知道函数有变化
+	12. 命名函数名、变量名、文件名应该是描述性的,避免缩写,尤其避免模糊或对读者不熟悉的缩写。并且不要通过删减单词内的字母来缩短,不要使用横线
+
+		1. 要避免的名字：
+
+			* 单字符名字,除非是计数或迭代元素,e可以作为Exception捕获
+			* -横线,不应出现在任何包名或模块名内
+			* 首尾都双下划线的名字,这种名字是python的内置保留名字
+		2. 命名约定
+
+			*  internal表示仅模块内可用、或者类内保护的或者私有的
+			* 单下划线开头表示是被保护的(from module import *不会import)
+			* 双下划线开头表示类内私有
+			* 相关的类和顶级函数放在同一个模块内,不必要一个类一个模块
+			* 对类名使用大写字母开头的单词,模块名应该使用小写加下划线的方式
+			* 在unittest方法中可能是test开头,这种方式是可以的： test<MethodUnderTest>_<state> 例如 testPop_EmptyStack
+		3. 文件名
+
+			1. 文件必须为py,不可以包含-
+		4. Guido的指导建议：
+		5. 建议不要使用双下划线,单下划线易于打出来、易读、易于调用
+	13. Main
+
+		1. 即便是一个用做脚本的py文件也应该是可以被import的,脚本功能应该被放在main()里,然后用__name__检查
+	14. 函数长度
+
+		1. 有限小而专一的函数
+		2. 函数长度没有固定的限制,但是超过40行的时候就要考虑是否要在不影响函数结构的前提下分解函数
+		3. 尽管常函数现在运行的很好,但是后续几个月其他人修正增加新功能的时候可能会引入新的难以发现的bug,函数越简短,越利于维护
+		4. 面对长而复杂的函数,考虑重构为若干个更小更可控的片段
+	15. 类型注释
+
+		1. General
+
+			* 参考PEP-484
+			* 在方法中,只在必要时给self或者cls增加类型信息
+			* 如果其他变量或返回类型不定,使用Any
+			* 不需要注释每个函数
+
+				* 至少注明公共API
+				* 使用类型检查来在安全性和声明清晰性以及灵活性之间平衡
+				* 标注容易因为类型造成bug的代码
+				* 标注难理解的代码
+				* 标注类型稳定的代码,成熟稳定的带么可以都进行标注而不会影响其灵活性
+		2. 分行
+
+			1. 标注后的参数每行一个,如果能放在一行也可,如果需要分行,内缩进4个空格
+		3. 预先声明,如果需要一些还未定义的类型,可以用字符串
+		4. 默认值PEP-008,只有在同时需要类型注释和默认值的时候在等号前后都加空格
+		5. NoneType
+
+			1. python中NoneType是第一等类型,如果一个参数可以是None,那么就需要生命,可以使用Union,如果有别的类型使用Optional,并且显式的使用它
+		6. 类型别名
+
+			1. 可以对复杂类型声明别名,同样大写字母驼峰命名,如果只用于当前模块,应加下划线作为私有
+		7. 忽略类型检查# type: ignore
+		8. 对变量标注类型如果内部变量很难或者不可能指向,可以使用下述方式：
+
+			1. 行尾# type：
+			2. 声明标注：
+		9. 元组和列表不像是列表只有单一类型,元组可以有多种类型,后者常用于函数返回
+		10. TypeVars
+
+			1. python有泛型,工厂函数TypeVar
+		11. 字符串类型
+
+			1. 注释使用str
+			2. 如果涉及bytes和字符串,使用Union
+			3. 如果不涉及字符串类型转换,可以使用AnyStr
+		12. 从Typing模块import,可以用as进行转换防止命名空间冲突
+		13. 条件import
+
+			1. 只在运行时一定不要进行类型检查的并且类型检查需要额外的import情况下才条件import,具体可以参考 https://google.github.io/styleguide/pyguide.html#31913-conditional-imports
+		14. 循环依赖
+
+			1. https://google.github.io/styleguide/pyguide.html#31914-circular-dependencies
+		15. 泛型
+
+			1. https://google.github.io/styleguide/pyguide.html#31915-generics
+
+第四部分
+	1. 
+保持一致！！！！
+	2. 
+编程时,先花几分钟看看代码并且决定风格,保证风格统一
+
+
+
+
+
+### **TBD**
