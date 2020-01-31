@@ -1,5 +1,5 @@
 # 谷歌Python代码风格指南 中文翻译
-Update: 2020.01.30
+Update: 2020.01.31
 
 Translator: [shendeguize@github](
 https://github.com/shendeguize)
@@ -1230,119 +1230,649 @@ if i & (i-1) == 0:  # True if i is 0 or a power of 2.
 
 尽管被代码审核人员指出在应该使用分号的地方使用了逗号是很令人沮丧的,将源代码维护在高度清楚可读的程度是很重要的.合适的标点,拼写和语法能够帮助达到这个目标.
 
-# To Be Continued
+### 3.9 类
+如果类并非从其他基类继承而来,那么就要明确是从`object`继承而来,即便内嵌类也是如此.
+
+**Yes:**
+
+```Python
+class SampleClass(object):
+    pass
+
+class OuterClass(object):
+    class InnerClass(object):
+        pass
+
+class ChildClass(ParentClass):
+    """Explicitly inherits from another class already."""
+```
+
+**No:**
+
+```Python
+class SampleClass:
+    pass
+
+class OuterClass:
+    class InnerClass:
+        pass
+```
+
+从`object`类继承保证了属性能够在Python2正确运行并且保护代码在Python3下出现潜在的不兼容.这样也定义了object包括`__new__`,`__init__`,`__delattr__`,`__getattribute__`,`__setattr__`,`__hash__`,`__repr__`,和`__str__`等默认特殊方法的实现.
+
+### 3.10 字符串
+使用`format`或`%`来格式化字符串,即使参数都是字符串对象,也要考虑使用`+`还是`%`及`format`.
+
+**Yes:**
+
+```Python
+x = a + b
+x = '%s, %s!' % (imperative, expletive)
+x = '{}, {}'.format(first, second)
+x = 'name: %s; score: %d' % (name, n)
+x = 'name: {}; score: {}'.format(name, n)
+x = f'name: {name}; score: {n}'  # Python 3.6+
+```
+
+**No:**
+
+```Python
+employee_table = '<table>'
+for last_name, first_name in employee_list:
+    employee_table += '<tr><td>%s, %s</td></tr>' % (last_name, first_name)
+employee_table += '</table>'
+```
+
+避免使用`+`和`+=`操作符来在循环内累加字符串,因为字符串是不可变对象.这会造成不必要的临时变量导致运行时间以四次方增长而非线性增长.应将每个字符串都记入一个列表并使用`''.join`来将列表在循环结束后连接(或将每个子字符串写入`io.BytesIO`缓存)
+
+**Yes:**
+
+```Python
+items = ['<table>']
+for last_name, first_name in employee_list:
+    items.append('<tr><td>%s, %s</td></tr>' % (last_name, first_name))
+items.append('</table>')
+employee_table = ''.join(items)
+```
+
+**No:**
+
+```Python
+employee_table = '<table>'
+for last_name, first_name in employee_list:
+    employee_table += '<tr><td>%s, %s</td></tr>' % (last_name, first_name)
+employee_table += '</table>'
+```
+
+在同一个文件内,字符串引号要一致,选择`''`或者`""`并且不要改变.对于需要避免`\\`转义的时候,可以更改.
+
+**Yes:**
+
+```Python
+Python('Why are you hiding your eyes?')
+Gollum("I'm scared of lint errors.")
+Narrator('"Good!" thought a happy Python reviewer.')
+```
+
+**No:**
+
+```Python
+Python("Why are you hiding your eyes?")
+Gollum('The lint. It burns. It burns us.')
+Gollum("Always the great lint. Watching. Watching.")
+```
+
+多行字符串多行字符串优先使用"""而非`'''`,当且只当对所有非文档字符串的多行字符串都是用`'''`而且对正常字符串都使用`'`时才可使用三单引号.docstring不论如何必须使用`"""`
+
+多行字符串和其余代码的缩进方式不一致.如果需要避免在字符串中插入额外的空格,要么使用单行字符串连接或者带有[`textwarp.dedent()`](https://docs.python.org/3/library/textwrap.html#textwrap.dedent)的多行字符串来移除每行的起始空格.
+
+**No:**
+
+```Python
+long_string = """This is pretty ugly.
+Don't do this.
+"""
+```
+
+**Yes:**
+
+```Python
+long_string = """This is fine if your use case can accept
+    extraneous leading spaces."""
+
+long_string = ("And this is fine if you can not accept\n" +
+               "extraneous leading spaces.")
+
+long_string = ("And this too is fine if you can not accept\n"
+               "extraneous leading spaces.")
+
+import textwrap
+
+long_string = textwrap.dedent("""\
+    This is also fine, because textwrap.dedent()
+    will collapse common leading spaces in each line.""")
+```
+
+### 3.7 文件和socket
+当使用结束后显式地关闭文件或socket.
+
+在非必要的情况下,让文件,socket或者其他文件方式的对象打开着有很多缺点:
+
+* 他们可能会消耗有限的系统资源,例如文件描述符.如果在使用没有即使归还系统,处理很多这样对象的代码可能会浪费掉很多不应浪费的资源.
+* 保持一个文件可能会阻止其他操作诸如移动或删除.
+* 被程序共享的文件和socket可能会无意中在逻辑上已被关闭的情况下仍被读写.如果实际上已经关闭,试图读写的操作会抛出异常,这样就可以立即发现问题.
+
+此外,当文件或socket在文件对象被销毁的同时被自动关闭的时候,是不可能将文件的生命周期和文件状态绑定的:
+
+* 不能保证合适会真正将文件对象销毁.不同的Python解释器使用的内存管理技术不同,例如延时垃圾处理可能会让对象的生命周期被无限期延长.
+* 可能导致意料之外地对文件对象的引用,例如在全局变量或者异常回溯中,可能会让文件对象比预计的生命周期更长.
+
+推荐使用[with语句](http://docs.python.org/reference/compound_stmts.html#the-with-statement)管理文件:
+
+```Python
+with open("hello.txt") as hello_file:
+    for line in hello_file:
+        print(line)
+```
+
+对于类似文件的对象,如果不支持with语句的可以使用`contextlib.closing()`:
+
+```Python
+import contextlib
+
+with contextlib.closing(urllib.urlopen("http://www.python.org/")) as front_page:
+    for line in front_page:
+        print(line)
+```
+
+### 3.12  TODO注释
+对于下述情况使用`TODO`注释:临时的,短期的解决方案或者足够好但是不完美的解决方案.
+
+`TODO`注释以全部大写的字符串`TODO`开头,并带有写入括号内的姓名,email地址,或其他可以标识负责人或者包含关于问题最佳描述的issue.随后是这里做什么的说明.
+
+有统一风格的`TODO`的目的是问了方便搜索并了解如何获取更多相关细节.`TODO`并不是保证被提及者会修复问题.因此在创建`TODO`注释的时候,基本上都是给出你的名字.
+
+```Python
+# TODO(kl@gmail.com): Use a "*" here for string repetition.
+# TODO(Zeke) Change this to use relations.
+```
+
+如果`TODO`注释形式为"未来某个时间点会做什么事"的格式,确保要么给出一个非常具体的时间点(例如"将于2009年11月前修复")或者给出一个非常具体的事件(例如"当所有客户端都能够处理XML响应时就移除此代码").
+
+### 3.13 import格式
+imports应该在不同行.例如:
+
+**Yes:**
+
+```Python
+import os
+import sys
+```
+
+**No:**
+
+```Python
+import os, sys
+```
+
+import应集中放在文件顶部,在模块注释和docstring后面,模块globals和常量前面.应按照从最通用到最不通用的顺序排列分组:
+
+1. Python未来版本import语句,例如:    
+    
+    >   ```Python
+    >    from __future__ import absolute_import
+    >    from __future__ import division
+    >    from __future__ import print_function
+    >    ```
+    
+    >    更多信息参看[上文](https://google.github.io/styleguide/pyguide.html#from-future-imports)
+        
+2. Python标准基础库import,例如:
+    
+    >    ```Python
+    >    import sys
+    >    ```
+
+3. 第三方库或包的import,例如:
+    
+    >    ```Python
+    >    import tensorflow as tf
+    >    ```
+    
+4. 代码库内子包import,例如:
+    
+    >    ```Python
+    >    from otherproject.ai import mind
+    >    ```
+    
+5. **此条已弃用**:和当前文件是同一顶级子包专用的import,例如:
+    >    ```Python
+    >    from myproject.backend.hgwells import time_machine
+    >    ```
+    
+    在旧版本的谷歌Python代码风格指南中实际上是这样做的.但是现在不再需要了.**新的代码风格不再受此困扰.**简单的将专用的子包import和其他子包import同一对待即可.
+
+在每个组内按照每个模块的完整包路径的字典序忽略大小写排序.可以根据情况在每个节质检增加空行.
+```Python
+import collectionsimport queueimport sys
+
+from absl import appfrom absl import flagsimport bs4import cryptographyimport tensorflow as tf
+
+from book.genres import scififrom myproject.backend.hgwells import time_machinefrom myproject.backend.state_machine import main_loopfrom otherproject.ai import bodyfrom otherproject.ai import mindfrom otherproject.ai import soul
+
+# Older style code may have these imports down here instead:
+# 旧版本代码风格可能会采用下述import方式
+# from myproject.backend.hgwells import time_machine
+# from myproject.backend.state_machine import main_loop
+```
+
+### 3.14 语句
+每行只有一条语句.
+
+不过如果测试语句和结果能够在一行内放下,就可以放在一行内.但是不允许将`try`/`except`语句和对应内容放于一行,因为`try`或者`except`都不能在一行内完成.对于没有else的if语句可以将`if`和对应内容合并到一行.
+
+**Yes:**
+
+```Python
+if foo: bar(foo)
+```
+
+**No:**
+
+```Python
+if foo: bar(foo)
+else:   baz(foo)
+
+try:               bar(foo)
+except ValueError: baz(foo)
+
+try:
+    bar(foo)
+except ValueError: baz(foo)
+```
+
+### 3.15 访问
+对于琐碎又不太重要的访问函数,应用公共变量来替代访问函数,以避免额外的程序调用消耗,当添加了更多函数功能时,使用`property`来保持连续性
+
+此外,如果访问过于复杂,或者访问变量的消耗过大,应该使用诸如`get_foo()`和`set_foo()`之类的函数式访问(参考[命名](https://google.github.io/styleguide/pyguide.html#s3.16-naming)指南).如果过去的访问方式是通过属性,新访问函数不要绑定到property上,这样使用property的旧方式就会失效,使用者就会知道函数有变化.
+
+### 3.16 命名
+`module_name`,`package_name`,`ClassName`,`method_name`,`ExceptionName`,`function_name`,`GLOBAL_CONSTANT_NAME`,`global_var_name`,`instance_var_name`,`function_parameter_name`,`local_var_name`.
+
+命名函数名,变量名,文件名应该是描述性的,避免缩写,尤其避免模糊或对读者不熟悉的缩写.并且不要通过删减单词内的字母来缩短.
+
+使用`.py`作为文件拓展名,不要使用横线.
+
+#### 3.16.1 要避免的名字：
+* 单字符名字,除非是计数或迭代元素,e可以作为Exception捕获识别名来使用..
+* `-`横线,不应出现在任何包名或模块名内
+* `__double_leading_and_trailing_underscore__`首尾都双下划线的名字,这种名字是python的内置保留名字
+
+#### 3.16.4 命名约定
+*  internal表示仅模块内可用、或者类内保护的或者私有的
+* 单下划线(`_`)开头表示是被保护的(`from module import *`不会import).双下划线(`__`也就是"dunder")开头的实例变量或者方法表示类内私有(使用命名修饰).我们不鼓励使用,因为这会对可读性和可测试性有削弱二期`并非真正`的私有.
+* 相关的类和顶级函数放在同一个模块内,不必像是Java一样要一个类放在一个模块里.
+* 对类名使用大写字母(如CapWords)开头的单词,命名,模块名应该使用小写加下划线的方式.尽管有一些旧的模块命名方式是大写字母的(如CapWords.py),现在不鼓励这样做了,因为在模块刚好是从某个类命名出发的时候可能会令人迷惑(例如是选择`import StringIO`还是`from StringIO import StringIO`?)
+* 在*unittest*方法中可能是`test`开头来分割名字的组成部分,即使这些组成部分是使用大写字母驼峰式的.这种方式是可以的： `test<MethodUnderTest>_<state>`例如`testPop_EmptyStack`,对于命名测试方法没有明确的正确方法.
+
+#### 3.16.3 文件名
+文件拓展名必须为`.py`,不可以包含`-`.这保证了能够被正常import和单元测试.如果希望一个可执行文件不需要拓展名就可以被调用,那么建立一个软连接或者一个简单的bash打包脚本包括`exec "$0.py" "$@"`.
+
+#### 3.16.4 Guido的指导建议
 
 
-	5. 类
-	6. 字符串
+| **类型** | **公共** | **内部** |
+| --- | --- | --- |
+| 包 | `lower_with_under` |  |
+| 模块 | `lower_with_under` | `_lower_with_under` |
+| 类 | `CapWords` | `_CapWords` |
+| 异常 | `CapWords` |  |
+| 函数 | `lower_with_under()` | `_lower_with_under()` |
+| 全局/类常量 | `CAPS_WITH_UNDER` | `_CAPS_WITH_UNDER` |
+| 全局/类变量 | `lower_with_under` | `_lower_with_under` |
+| 实例变量 | `lower_with_under` | `_lower_with_under`(受保护) |
+| 方法名 | `lower_with_under()` | `_lower_with_under()`(受保护) |
+| 函数/方法参数 | `lower_with_under` |  |
+| 局部变量 | `lower_with_under` |  |
 
-		1. 使用format或%,即使对于字符串对象,也要考虑使用+还是%及format
-		2. 避免使用+和+=来在循环中累加字符串,因为字符串对象是不可变的,索引会造成不必要的临时object造成额外的时间开销,使用"".join
-		3. 引号的使用应该统一,如果有字符串内有引号的,可以视情况更改以避免转义,多行字符串优先使用""",docstring也必须使用"""
-	7. 文件和socket
-
-		1. 显式地关闭文件或socket
-		2. 推荐使用with管理,不支持with的可以使用contextlib.closing()
-	8. TODO注释
-	9. import格式
-
-		1. 分行import
-		2. import应集中放在顶部,在模块注释和docstring后面,模块globals和常量前面,按照从最通用到最不通用的顺序排列分组,例如基础库,第三方库,代码库内的代码,每个组内按照字典序忽略大小写排序
-	10. 语句
-
-		1. 每行只有一条语句,对于没有else的if语句(在很简单的情况下)可以合并到一行
-	11. 访问
-
-		1. 对于琐碎又不太重要的访问函数,应用公共变量来替代访问函数,以避免额外的程序消耗,当添加了更多函数功能时,使用property来保持连续性
-		2. 此外,如果访问过于复杂,或者访问变量的消耗过大,应该使用get_foo()和set_foo()之类的函数式访问
-		3. 如果过去的访问方式是property,新访问函数不要绑定到property上,这样使用property的旧方式就会失效,使用者就会知道函数有变化
-	12. 命名函数名、变量名、文件名应该是描述性的,避免缩写,尤其避免模糊或对读者不熟悉的缩写。并且不要通过删减单词内的字母来缩短,不要使用横线
-
-		1. 要避免的名字：
-
-			* 单字符名字,除非是计数或迭代元素,e可以作为Exception捕获
-			* -横线,不应出现在任何包名或模块名内
-			* 首尾都双下划线的名字,这种名字是python的内置保留名字
-		2. 命名约定
-
-			*  internal表示仅模块内可用、或者类内保护的或者私有的
-			* 单下划线开头表示是被保护的(from module import *不会import)
-			* 双下划线开头表示类内私有
-			* 相关的类和顶级函数放在同一个模块内,不必要一个类一个模块
-			* 对类名使用大写字母开头的单词,模块名应该使用小写加下划线的方式
-			* 在unittest方法中可能是test开头,这种方式是可以的： test<MethodUnderTest>_<state> 例如 testPop_EmptyStack
-		3. 文件名
-
-			1. 文件必须为py,不可以包含-
-		4. Guido的指导建议：
-		5. 建议不要使用双下划线,单下划线易于打出来、易读、易于调用
-	13. Main
-
-		1. 即便是一个用做脚本的py文件也应该是可以被import的,脚本功能应该被放在main()里,然后用__name__检查
-	14. 函数长度
-
-		1. 有限小而专一的函数
-		2. 函数长度没有固定的限制,但是超过40行的时候就要考虑是否要在不影响函数结构的前提下分解函数
-		3. 尽管常函数现在运行的很好,但是后续几个月其他人修正增加新功能的时候可能会引入新的难以发现的bug,函数越简短,越利于维护
-		4. 面对长而复杂的函数,考虑重构为若干个更小更可控的片段
-	15. 类型注释
-
-		1. General
-
-			* 参考PEP-484
-			* 在方法中,只在必要时给self或者cls增加类型信息
-			* 如果其他变量或返回类型不定,使用Any
-			* 不需要注释每个函数
-
-				* 至少注明公共API
-				* 使用类型检查来在安全性和声明清晰性以及灵活性之间平衡
-				* 标注容易因为类型造成bug的代码
-				* 标注难理解的代码
-				* 标注类型稳定的代码,成熟稳定的带么可以都进行标注而不会影响其灵活性
-		2. 分行
-
-			1. 标注后的参数每行一个,如果能放在一行也可,如果需要分行,内缩进4个空格
-		3. 预先声明,如果需要一些还未定义的类型,可以用字符串
-		4. 默认值PEP-008,只有在同时需要类型注释和默认值的时候在等号前后都加空格
-		5. NoneType
-
-			1. python中NoneType是第一等类型,如果一个参数可以是None,那么就需要生命,可以使用Union,如果有别的类型使用Optional,并且显式的使用它
-		6. 类型别名
-
-			1. 可以对复杂类型声明别名,同样大写字母驼峰命名,如果只用于当前模块,应加下划线作为私有
-		7. 忽略类型检查# type: ignore
-		8. 对变量标注类型如果内部变量很难或者不可能指向,可以使用下述方式：
-
-			1. 行尾# type：
-			2. 声明标注：
-		9. 元组和列表不像是列表只有单一类型,元组可以有多种类型,后者常用于函数返回
-		10. TypeVars
-
-			1. python有泛型,工厂函数TypeVar
-		11. 字符串类型
-
-			1. 注释使用str
-			2. 如果涉及bytes和字符串,使用Union
-			3. 如果不涉及字符串类型转换,可以使用AnyStr
-		12. 从Typing模块import,可以用as进行转换防止命名空间冲突
-		13. 条件import
-
-			1. 只在运行时一定不要进行类型检查的并且类型检查需要额外的import情况下才条件import,具体可以参考 https://google.github.io/styleguide/pyguide.html#31913-conditional-imports
-		14. 循环依赖
-
-			1. https://google.github.io/styleguide/pyguide.html#31914-circular-dependencies
-		15. 泛型
-
-			1. https://google.github.io/styleguide/pyguide.html#31915-generics
-
-第四部分
-	1. 
-保持一致！！！！
-	2. 
-编程时,先花几分钟看看代码并且决定风格,保证风格统一
+尽管Python支持通过双下划线`__`(即"dunder")来私有化.不鼓励这样做.优先使用单下划线.单下划线更易于打出来、易读、易于小的单元测试调用.Lint的警告关注受保护成员的无效访问.
 
 
+### 3.17 Main
+即便是一个用做脚本的py文件也应该是可以被import的,而只用于import时,也不应有执行了主函数的副作用.主函数的功能应该被放在`main()`里.
 
+在Python中,`pydoc`和单元测试要求模块是可import的.所以代码在主程序执行前应进行`if __name__ == '__main__':`检查,以防止模块在import时被执行.
 
+```Python
+def main():
+    ...
 
-### **TBD**
+if __name__ == '__main__':
+    main()
+```
+
+所有顶级代码在模块被import时执行.因而要小心不要调用函数,创建对象或者执行其他在执行`pydoc`时不应该被执行的操作.
+
+### 3.18 函数长度
+优先写小而专一的函数.
+
+长函数有时候是科室的,故而函数长度没有固定的限制.但是超过40行的时候就要考虑是否要在不影响程序结构的前提下分解函数.
+
+尽管长函数现在运行的很好,但是在之后的时间里其他人修改函数并增加新功能的时候可能会引入新的难以发现的bug,保持函数的简短,这样有利于其他人读懂和修改代码.
+
+在处理一些代码时,坑发现有些函数长而且复杂.不要畏惧调整现有代码,如果处理这个函数非常困难,如难以以对报错debug或者希望在许多不同上下文环境里使用代码的局部,那么将函数拆解成若干个更小更可控的片段.
+
+### 3.19 类型注释
+
+#### 3.19.1 基本规则
+
+* 熟悉[PEP-484](https://www.python.org/dev/peps/pep-0484/)
+* 在方法中,只在必要时给`self`或者`cls`增加合适的类型信息.例如`@classmethod def create(cls: Type[T]) -> T: return cls()`
+* 如果其他变量或返回类型不定,使用`Any`
+* 不需要注释每个函数
+    * 至少需要注明公共接口
+    * 使用类型检查来在安全性和声明清晰性以及灵活性之间平衡
+    * 标注容易因类型相关而抛出异常的代码(previous bugs or complexity,此处译者认为是与上一条一致,平衡安全性和复杂性)
+    * 标注难理解的代码
+    * 标注类型稳定的代码,成熟稳定的代码可以都进行标注而不会影响其灵活性
+
+#### 3.19.2 分行
+遵循现有的[缩进](https://google.github.io/styleguide/pyguide.html#indentation)规范
+
+标注类型后,函数签名多数都要是"每行一个参数".
+
+```Python
+def my_method(self,
+              first_var: int,
+              second_var: Foo,
+              third_var: Optional[Bar]) -> int:
+  ...
+```
+
+优先在变量之间换行,而非其他地方(如变量名和类型注释质检).如果都能放在一行内,就放在一行.
+
+```Python
+def my_method(self, first_var: int) -> int:
+  ...
+```
+
+如果函数名,一直到最后的参数以及返回类型注释放在一行过长,那么分行并缩进4个空格.
+
+```Python
+def my_method(
+    self, first_var: int) -> Tuple[MyLongType1, MyLongType1]:
+  ...
+```
+
+当返回值类型不嫩和最后一个参数放入同一行,比较好的处理方式是将参数分行并缩进4个空格,右括号和返回值类型换行并和`def`对齐.
+
+```Python
+def my_method(
+    self, other_arg: Optional[MyLongType]) -> Dict[OtherLongType, MyLongType]:
+  ...
+```
+
+就像上面的例子一样,尽量不要分割类型注释,不过有时类型注释太长无法放入一行,(那就尽量让子注释不要被分割).
+
+```Python
+def my_method(
+    self,
+    first_var: Tuple[List[MyLongType1],
+                     List[MyLongType2]],
+    second_var: List[Dict[
+        MyLongType3, MyLongType4]]) -> None:
+  ...
+```
+
+如果某个命名和类型太长了,考虑使用别名.如果没有其他解决方案,在冒号后分行缩进4个空格.
+
+**Yes:**
+
+```Python
+def my_function(
+    long_variable_name:
+        long_module_name.LongTypeName,) -> None:
+  ...
+```
+
+**No:**
+
+```Python
+def my_function(
+    long_variable_name: long_module_name.
+        LongTypeName,) -> None:
+  ...
+```
+
+#### 3.19.3 前置声明
+如果需要同一模块内还未定义的类名,例如需要类声明内部的类,或者需要在后续代码中定义的类,那么使用类名的字符串来代替.
+
+```Python
+class MyClass(object):
+
+  def __init__(self,
+               stack: List["MyClass"]) -> None:
+```
+
+#### 3.19.4 默认值
+参考[PEP-008](https://www.python.org/dev/peps/pep-0008/#other-recommendations),只有在同时需要类型注释和默认值的时候在`=`前后都加空格
+
+**Yes:**
+
+```Python
+def func(a: int = 0) -> int:
+  ...
+```
+
+**No:**
+
+```Python
+def func(a:int=0) -> int:
+  ...
+```
+
+#### 3.19.5 NoneType
+在Python系统中`NoneType`是一等类型,为了方便输入,`None`是`NoneType`的别名.如果一个参数可以是`None`,那么就需要声明!可以使用`Union`,但如果只有一个其他类型,那么使用`Optional`.
+
+显式地使用`Optional`而非隐式地.PEP 484的早期版本容许`a: Text = None`被解释为`a: Optional[Text] = None`.但现在已经不推荐这样使用了.
+
+**Yes:**
+
+```Python
+def func(a: Optional[Text], b: Optional[Text] = None) -> Text:
+  ...
+def multiple_nullable_union(a: Union[None, Text, int]) -> Text
+  ...
+```
+
+**No:**
+
+```Python
+def nullable_union(a: Union[None, Text]) -> Text:
+  ...
+def implicit_optional(a: Text = None) -> Text:
+  ...
+```
+
+#### 3.19.6 类型别名
+可以对复杂类型声明别名,同样大写字母驼峰命名,如果只用于当前模块,应加下划线私有化.
+
+例如,如果带有模块名的类型名过长:
+
+```Python
+_ShortName = module_with_long_name.TypeWithLongNameComplexMap = Mapping[Text, List[Tuple[int, int]]]
+```
+#### 3.19.7 忽略类型检查
+可以通过增加特殊行注释`# type: ignore`来禁止类型检查.
+
+`pytype`对于明确的报错有关闭选项(类似于lint):
+
+```Python
+# pytype: disable=attribute-error
+```
+
+#### 3.19.8 对变量注释类型
+对变量标注类型如果内部变量很难或者不可能指向,可以使用下述方式：
+
+[*类型注释*](https://google.github.io/styleguide/pyguide.html#type-comments):
+
+在行尾增加以`# type`开头的注释
+
+```Python
+a = SomeUndecoratedFunction()  # type: Foo
+```
+
+[*注释绑定*](https://google.github.io/styleguide/pyguide.html#annotated-assignments):
+
+在变量名和赋值之间用冒号和类型注明,和函数参数一致.
+
+```Python
+a: Foo = SomeUndecoratedFunction()
+```
+
+#### 3.19.9 元组和列表
+不像是列表只能包含单一类型,元组可以既只有一种重复类型或者一组不同类型的元素,后者常用于函数返回.
+
+```Python
+a = [1, 2, 3]  # type: List[int]
+b = (1, 2, 3)  # type: Tuple[int, ...]
+c = (1, "2", 3.5)  # type: Tuple[int, Text, float]
+```
+
+#### 3.19.10 TypeVars
+Python是有[泛型](https://www.python.org/dev/peps/pep-0484/#generics)的,工厂函数`TypeVar`是通用的使用方式.
+
+例子:
+
+```Python
+from typing import List, TypeVarT = TypeVar("T")...def next(l: List[T]) -> T:
+  return l.pop()
+```
+
+TypeVar可以约束类型:
+
+```Python
+AddableType = TypeVar("AddableType", int, float, Text)def add(a: AddableType, b: AddableType) -> AddableType:
+    return a + b
+```
+
+在`typing`模块预定义好的类型变量是`AnyStr`,用于针对字符串可以是`bytes`也可为`unicode`并且保持一致的多个类型注释.
+
+#### 3.19.11 字符串类型
+注释字符串的合适类型是基于Python版本的.
+
+对于只有Python3的代码,使用`str`,`Text`可以用但是在选择上保持一致.
+
+对于Python2兼容的代码,用`Text`,在一些很罕见的情况下,`str`可能可用.当在不同Python版本之间返回值类型不同的时候通常是为了照顾兼容性.避免使用`unicode`,因为Python3中不存在.
+
+**No:**
+
+```Python
+def py2_code(x: str) -> unicode:
+  ...
+```
+
+**Yes:**
+
+```Python
+def deals_with_binary_data(x: bytes) -> bytes:
+  ...
+```
+
+对于Python2兼容,处理文本数据(Python中`str`或`unicode`,Python3中`str`)的代码,使用`Text`.对于只有Python3的代码,优先使用`str`.
+
+```Python
+from typing import Text...def py2_compatible(x: Text) -> Text:
+  ...def py3_only(x: str) -> str:
+  ...
+```
+
+如果既可以是byte也可以是文本,那么使用`Union`和合适的文本类型.
+
+```Python
+from typing import Text, Union...def py2_compatible(x: Union[bytes, Text]) -> Union[bytes, Text]:
+  ...def py3_only(x: Union[bytes, str]) -> Union[bytes, str]:
+  ...
+```
+
+如果一个函数中所有的字符串类型始终一致,例如前文例子中返回值类型和参数类型是一致的,那么使用[`AnyStr`](https://google.github.io/styleguide/pyguide.html#typing-type-var)
+
+像这样写能够简化代码向Python3的迁移过程.
+
+#### 3.19.12 typing的import
+对于从`typing`模块import的类,要import类本身.明确的允许在一行内从`typing`模块import多个特定的类,如
+
+```Python
+from typing import Any, Dict, Optional
+```
+
+这种从`typing`模块import的方式会向命名空间内增加额外项,`typing`中的任何命名都应该和关键字同等对待并且不在你的Python代码中定义,typed or not(译者推测文无论是否引入).如果和已有的命名冲突,使用`import x as y`来import.
+
+```Python
+from typing import Any as AnyType
+```
+
+#### 3.19.13 条件import
+只在运行时一定要避免进行类型检查的情况下使用条件import.不鼓励使用这种模式.鼓励使用其他替代方式诸如重构代码以容许顶级import.
+
+只用于类型注释的import可以被归于`if TYPE_CHECKING:`代码块中.
+* 条件import的类型应被视为字符串引用,以和Python3.6兼容(在Python3.6中,注释表达式实际上被赋值的).
+* 只有单独用于类型注释的实例才能在这里定义,包括了别名.否则将会报运行错误因为在运行时这些模块不会被引用.
+* 代码块应该紧跟在正常import后面.
+* 在类型import后不应有空行
+* 按照正常import顺序对这一块代码进行排序
+
+```Python
+import typingif typing.TYPE_CHECKING:
+    import sketchdef f(x: "sketch.Sketch"): ...
+```
+
+#### 3.19.14 循环依赖
+由于类型检查引发的循环依赖是一种code smell([代码异味](https://zh.wikipedia.org/zh-hans/%E4%BB%A3%E7%A0%81%E5%BC%82%E5%91%B3)),这样的代码应当被重构.尽管技术上是可以保留循环引用的.[build system](https://google.github.io/styleguide/pyguide.html#typing-build-deps)(系统)不允许这样做因为每个模块都要依赖于其他模块.
+
+将造成循环依赖的模块替换为`Any`并赋予一个有意义的[别名](https://google.github.io/styleguide/pyguide.html#typing-aliases)并使用从这个模块导入的真实类名(因为任何`Any`的属性都是`Any`).别名的定义用和最后一行import用一行空行分隔.
+
+```Python
+from typing import Any
+
+some_mod = Any  # some_mod.py imports this module.
+...
+
+def my_method(self, var: some_mod.SomeType) -> None:
+  ...
+```
+
+#### 3.19.15  泛型
+当注释的时候,优先泛型类型专有类型参数,否则[泛型的参数会被认为是`Any`](https://www.python.org/dev/peps/pep-0484/#the-any-type).
+
+```Python
+def get_names(employee_ids: List[int]) -> Dict[int, Any]:
+  ...
+```
+```Python
+# These are both interpreted as get_names(employee_ids: List[Any]) -> Dict[Any, Any]
+def get_names(employee_ids: list) -> Dict:
+  ...
+
+def get_names(employee_ids: List) -> Dict:
+  ...
+```
+
+如果泛型最佳的参数类型是`Any`也将其显式地表示出来.但是在很多情况下[`TypeVar`](https://google.github.io/styleguide/pyguide.html#typing-type-var)可能更合适.
+
+```Python
+def get_names(employee_ids: List[Any]) -> Dict[Any, Text]:
+"""Returns a mapping from employee ID to employee name for given IDs."""
+```
+
+```Python
+T = TypeVar('T')def get_names(employee_ids: List[T]) -> Dict[T, Text]:
+"""Returns a mapping from employee ID to employee name for given IDs."""
+```
+
+## 4 最后的话
+***保持一致***
+
+如果你在编辑代码,花几分钟看看代码然后决定好要是用那种风格.如果现有代码在所有算术运算符两侧都加了空格,那么你也应该如此.如果现有的注释用连字符组成了包围框,那么你的注释也应如此.
+
+有代码风格指南的目的是有一个变成的共识,这样人们能够集中在内容而非形式上.我们将通用的代码风格指南公布与此这样人们就能了解这个共识(译者:有巴别塔的意味.)但是各自的代码风格也很重要.如果你添加的代码与原有代码看起来完全不一致,就会打乱读者的阅读节奏.避免这样.
