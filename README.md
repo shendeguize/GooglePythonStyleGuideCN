@@ -344,7 +344,7 @@ return ((x, y, z)
 不能通过方法名来分辨类型,例如`has_key()`意味着字典,当然这也是一种优势.
 
 #### 建议
-对于支持的类型诸如列表,字典和文件,使用默认迭代器和操作符.内置类型同样定义了迭代器方法.优先使用这些方法而非那些返回列表的方法.吹飞能够确定在遍历容器的过程中不会改变容器.不要使用Python 2专有迭代方法除非必要.
+对于支持的类型诸如列表,字典和文件,使用默认迭代器和操作符.内置类型同样定义了迭代器方法.优先使用这些方法而非那些返回列表的方法.除非能够确定在遍历容器的过程中不会改变容器.不要使用Python 2专有迭代方法除非必要.
 
 **Yes:**
 
@@ -476,7 +476,7 @@ def foo(a, b: Mapping = {}):  # Could still get passed to unchecked code 仍可�
 ```
 
 ### 2.13 属性
-使用属性可以通过简单而轻量级的访问器和设定器方法来来访问或设定数据.
+使用属性可以通过简单而轻量级的访问器和设定器方法来访问或设定数据.
 
 #### 2.13.1 定义
 一种装饰器调用来在计算比较轻量级时作为标准的属性访问来获取和设定一个属性的方式
@@ -536,7 +536,7 @@ class Square(object):
         return self.side * 4
 ```
 
-### 2.14 True/Flase表达式
+### 2.14 True/False表达式
 只要可能,就使用隐式False的if语句
 
 #### 2.14.1 定义
@@ -596,7 +596,7 @@ def f(x=None):
 当前Python版本提供了人们普遍更倾向的构建方式.
 
 #### 2.15.2 建议
-我们不是用任何不支持这些特性的Python版本,因而没有理由使用新方式.
+我们不使用任何不支持这些特性的Python版本,因而没有理由不使用新方式.
 
 **Yes:**
 
@@ -726,10 +726,10 @@ Python是一种非常灵活的语言并且提供了很多新奇的特性,诸如�
 Python3已经可用了(译者:目前Python2已经不受支持了),尽管不是每个项目都准备好使用Python3,所有的代码应该兼容Python3并且在可能的情况下在Python3的环境下测试.
 
 #### 2.20.1 定义
-Python3是Python的鲜明改变,当已有代码经常是Python2.7写成的,有一些简单可以做的事情来让代码对于其倾向更简明,因而可以让代码更好地在Python3下运行不用调整.
+Python3是Python的重大改变,尽管现有代码通常是Python2.7写成的,但可以做一些简单的事情来让代码更加明确地表达其意图,从而可以让代码更好地在Python3下运行而不用调整.
 
 #### 2.20.2 Pros
-在考虑Python3同时写代码更清晰也更容易在Python3环境下运行(只要所有依赖已就绪).
+在考虑Python3编写的代码更清晰明确，一旦所有依赖已就绪，就可以更容易在Python3环境下运行.
 
 #### 2.20.3 Cons
 一些人会认为默认样板有些丑,import实际不需要的特性到模块中是不常见的.
@@ -750,7 +750,7 @@ from __future__ import print_function
 
 请勿省略或移除这些import,即使在模块中他们没有在使用,除非代码只用于Python3.最好总是在所有的文档中都有从future的import,来保证不会在有人使用在后续编辑时遗忘.
 
-有其他的`from __future__`import语句,看喜好使用.我们的建议中不包含`unicode_literals`因为其并无明显优势,这是由于隐式默认的编码转换导致其在Python2.7内很多地方,必要时,大多数代码最好显式的使用`b''`和`u''`btyes和unicode字符串表示.(译者:这段翻译可能不准确)
+有其他的`from __future__`import语句,看喜好使用.我们的建议中不包含`unicode_literals`因为其并无明显优势,这是由于隐式默认的编码转换导致其在Python2.7内很多地方被引入了,必要时,大多数代码最好显式的使用`b''`和`u''`btyes和unicode字符串表示.(译者:这段翻译可能不准确)
 
 **The six, future, or past libraries**
 
@@ -784,7 +784,7 @@ a = SomeFunc()  # type: SomeType
 
 ## 3 Python代码风格规范
 
-### 3.1 分好
+### 3.1 分号
 不要在行尾加分号，也不要用分号把两行语句合并到一行
 
 ### 3.2 行长度
@@ -1067,7 +1067,7 @@ def complex(real, imag = 0.0): return Magic(r = real, i = imag)
 def complex(real, imag: float=0.0): return Magic(r = real, i = imag)
 ```
 
-不要用空格来做无必要的对齐,因为这会在维护时带来不必哟的负担(对于`:`.`#`,`=`等等).
+不要用空格来做无必要的对齐,因为这会在维护时带来不必要的负担(对于`:`.`#`,`=`等等).
 
 **Yes:**
 
@@ -1101,7 +1101,7 @@ dictionary = {
 确保使用正确的模块,函数,方法的文档字符串和行内注释.
 
 #### 3.8.1 文档字符串
-Python使用*文档字符串*来为代码生成文档.文档字符串是包,模块,类活函数的首个语句.这些字符串能够自动被`__doc__`成员方法提取并且被`pydoc`使用.(尝试在你的模块上运行`pydoc`来看看具体是什么).文档字符串使用三重双引号`"""`(根据[PEP-257](https://www.google.com/url?sa=D&q=http://www.python.org/dev/peps/pep-0257/)).文档字符串应该这样组织:一行总结(或整个文档字符串只有一行)并以句号,问好或感叹号结尾.随后是一行空行,随后是文档字符串,并与第一行的首个引号位置相对齐.更多具体格式规范如下.
+Python使用*文档字符串*来为代码生成文档.文档字符串是包,模块,类或函数的首个语句.这些字符串能够自动被`__doc__`成员方法提取并且被`pydoc`使用.(尝试在你的模块上运行`pydoc`来看看具体是什么).文档字符串使用三重双引号`"""`(根据[PEP-257](https://www.google.com/url?sa=D&q=http://www.python.org/dev/peps/pep-0257/)).文档字符串应该这样组织:一行总结(或整个文档字符串只有一行)并以句号,问好或感叹号结尾.随后是一行空行,随后是文档字符串,并与第一行的首个引号位置相对齐.更多具体格式规范如下.
 
 #### 3.8.2 模块
 每个文件都应包含许可模板.选择合适的许可模板用于项目(例如
@@ -1353,10 +1353,10 @@ long_string = textwrap.dedent("""\
     will collapse common leading spaces in each line.""")
 ```
 
-### 3.7 文件和socket
+### 3.11 文件和socket
 当使用结束后显式地关闭文件或socket.
 
-在非必要的情况下,让文件,socket或者其他文件方式的对象打开着有很多缺点:
+不必要地打开文件，socket或其他类似文件的对象有很多弊端：
 
 * 他们可能会消耗有限的系统资源,例如文件描述符.如果在使用没有即使归还系统,处理很多这样对象的代码可能会浪费掉很多不应浪费的资源.
 * 保持一个文件可能会阻止其他操作诸如移动或删除.
@@ -1364,7 +1364,7 @@ long_string = textwrap.dedent("""\
 
 此外,当文件或socket在文件对象被销毁的同时被自动关闭的时候,是不可能将文件的生命周期和文件状态绑定的:
 
-* 不能保证合适会真正将文件对象销毁.不同的Python解释器使用的内存管理技术不同,例如延时垃圾处理可能会让对象的生命周期被无限期延长.
+* 不能保证何时会真正将文件对象销毁.不同的Python解释器使用的内存管理技术不同,例如延时垃圾处理可能会让对象的生命周期被无限期延长.
 * 可能导致意料之外地对文件对象的引用,例如在全局变量或者异常回溯中,可能会让文件对象比预计的生命周期更长.
 
 推荐使用[with语句](http://docs.python.org/reference/compound_stmts.html#the-with-statement)管理文件:
@@ -1390,7 +1390,7 @@ with contextlib.closing(urllib.urlopen("http://www.python.org/")) as front_page:
 
 `TODO`注释以全部大写的字符串`TODO`开头,并带有写入括号内的姓名,email地址,或其他可以标识负责人或者包含关于问题最佳描述的issue.随后是这里做什么的说明.
 
-有统一风格的`TODO`的目的是问了方便搜索并了解如何获取更多相关细节.`TODO`并不是保证被提及者会修复问题.因此在创建`TODO`注释的时候,基本上都是给出你的名字.
+有统一风格的`TODO`的目的是为了方便搜索并了解如何获取更多相关细节.`TODO`并不是保证被提及者会修复问题.因此在创建`TODO`注释的时候,基本上都是给出你的名字.
 
 ```Python
 # TODO(kl@gmail.com): Use a "*" here for string repetition.
@@ -1556,11 +1556,11 @@ if __name__ == '__main__':
 ### 3.18 函数长度
 优先写小而专一的函数.
 
-长函数有时候是科室的,故而函数长度没有固定的限制.但是超过40行的时候就要考虑是否要在不影响程序结构的前提下分解函数.
+长函数有时候是合适的,故而函数长度没有固定的限制.但是超过40行的时候就要考虑是否要在不影响程序结构的前提下分解函数.
 
 尽管长函数现在运行的很好,但是在之后的时间里其他人修改函数并增加新功能的时候可能会引入新的难以发现的bug,保持函数的简短,这样有利于其他人读懂和修改代码.
 
-在处理一些代码时,坑发现有些函数长而且复杂.不要畏惧调整现有代码,如果处理这个函数非常困难,如难以以对报错debug或者希望在许多不同上下文环境里使用代码的局部,那么将函数拆解成若干个更小更可控的片段.
+在处理一些代码时,可能会发现有些函数长而且复杂.不要畏惧调整现有代码,如果处理这个函数非常困难,如难以对报错debug或者希望在几个不同的上下文中使用它,那么请将函数拆解成若干个更小更可控的片段.
 
 ### 3.19 类型注释
 
@@ -1589,7 +1589,7 @@ def my_method(self,
   ...
 ```
 
-优先在变量之间换行,而非其他地方(如变量名和类型注释质检).如果都能放在一行内,就放在一行.
+优先在变量之间换行,而非其他地方(如变量名和类型注释之间).如果都能放在一行内,就放在一行.
 
 ```Python
 def my_method(self, first_var: int) -> int:
@@ -1604,11 +1604,23 @@ def my_method(
   ...
 ```
 
-当返回值类型不嫩和最后一个参数放入同一行,比较好的处理方式是将参数分行并缩进4个空格,右括号和返回值类型换行并和`def`对齐.
+当返回值类型不能和最后一个参数放入同一行,比较好的处理方式是将参数分行并缩进4个空格,右括号和返回值类型换行并和`def`对齐.
 
 ```Python
 def my_method(
-    self, other_arg: Optional[MyLongType]) -> Dict[OtherLongType, MyLongType]:
+    self, other_arg: Optional[MyLongType]
+) -> Dict[OtherLongType, MyLongType]:
+  ...
+```
+
+pylint允许您将右括号移动到新行并与左括号对齐,但这不太容易理解.
+
+**No:**
+
+```
+def my_method(self,
+              other_arg: Optional[MyLongType]
+             ) -> Dict[OtherLongType, MyLongType]:
   ...
 ```
 
@@ -1631,7 +1643,8 @@ def my_method(
 ```Python
 def my_function(
     long_variable_name:
-        long_module_name.LongTypeName,) -> None:
+        long_module_name.LongTypeName,
+) -> None:
   ...
 ```
 
@@ -1695,13 +1708,17 @@ def implicit_optional(a: Text = None) -> Text:
 ```
 
 #### 3.19.6 类型别名
-可以对复杂类型声明别名,同样大写字母驼峰命名,如果只用于当前模块,应加下划线私有化.
+可以对复杂类型声明别名,别名的名称应为CapWorded,如果只用于当前模块,应加下划线私有化.
 
 例如,如果带有模块名的类型名过长:
 
 ```Python
-_ShortName = module_with_long_name.TypeWithLongNameComplexMap = Mapping[Text, List[Tuple[int, int]]]
+_ShortName = module_with_long_name.TypeWithLongName
+ComplexMap = Mapping[Text, List[Tuple[int, int]]]
 ```
+
+其他示例是复杂的嵌套类型和一个函数的多个返回变量（作为元组）.
+
 #### 3.19.7 忽略类型检查
 可以通过增加特殊行注释`# type: ignore`来禁止类型检查.
 
@@ -1745,18 +1762,30 @@ Python是有[泛型](https://www.python.org/dev/peps/pep-0484/#generics)的,工�
 例子:
 
 ```Python
-from typing import List, TypeVarT = TypeVar("T")...def next(l: List[T]) -> T:
+from typing import List, TypeVar
+T = TypeVar("T")
+...
+def next(l: List[T]) -> T:
   return l.pop()
 ```
 
 TypeVar可以约束类型:
 
 ```Python
-AddableType = TypeVar("AddableType", int, float, Text)def add(a: AddableType, b: AddableType) -> AddableType:
+AddableType = TypeVar("AddableType", int, float, Text)
+def add(a: AddableType, b: AddableType) -> AddableType:
     return a + b
 ```
 
 在`typing`模块预定义好的类型变量是`AnyStr`,用于针对字符串可以是`bytes`也可为`unicode`并且保持一致的多个类型注释.
+
+```
+from typing import AnyStr
+def check_length(x: AnyStr) -> AnyStr:
+  if len(x) <= 42:
+    return x
+  raise ValueError()
+```
 
 #### 3.19.11 字符串类型
 注释字符串的合适类型是基于Python版本的.
@@ -1772,6 +1801,8 @@ def py2_code(x: str) -> unicode:
   ...
 ```
 
+对于处理二进制数据的代码,请使用`bytes`.
+
 **Yes:**
 
 ```Python
@@ -1782,16 +1813,22 @@ def deals_with_binary_data(x: bytes) -> bytes:
 对于Python2兼容,处理文本数据(Python中`str`或`unicode`,Python3中`str`)的代码,使用`Text`.对于只有Python3的代码,优先使用`str`.
 
 ```Python
-from typing import Text...def py2_compatible(x: Text) -> Text:
-  ...def py3_only(x: str) -> str:
+from typing import Text
+...
+def py2_compatible(x: Text) -> Text:
+  ...
+def py3_only(x: str) -> str:
   ...
 ```
 
 如果既可以是byte也可以是文本,那么使用`Union`和合适的文本类型.
 
 ```Python
-from typing import Text, Union...def py2_compatible(x: Union[bytes, Text]) -> Union[bytes, Text]:
-  ...def py3_only(x: Union[bytes, str]) -> Union[bytes, str]:
+from typing import Text, Union
+...
+def py2_compatible(x: Union[bytes, Text]) -> Union[bytes, Text]:
+  ...
+def py3_only(x: Union[bytes, str]) -> Union[bytes, str]:
   ...
 ```
 
@@ -1823,8 +1860,10 @@ from typing import Any as AnyType
 * 按照正常import顺序对这一块代码进行排序
 
 ```Python
-import typingif typing.TYPE_CHECKING:
-    import sketchdef f(x: "sketch.Sketch"): ...
+import typing
+if typing.TYPE_CHECKING:
+    import sketch
+def f(x: "sketch.Sketch"): ...
 ```
 
 #### 3.19.14 循环依赖
@@ -1866,7 +1905,8 @@ def get_names(employee_ids: List[Any]) -> Dict[Any, Text]:
 ```
 
 ```Python
-T = TypeVar('T')def get_names(employee_ids: List[T]) -> Dict[T, Text]:
+T = TypeVar('T')
+def get_names(employee_ids: List[T]) -> Dict[T, Text]:
 """Returns a mapping from employee ID to employee name for given IDs."""
 ```
 
@@ -1875,4 +1915,4 @@ T = TypeVar('T')def get_names(employee_ids: List[T]) -> Dict[T, Text]:
 
 如果你在编辑代码,花几分钟看看现有代码然后决定好要使用哪种风格.如果现有代码在所有算术运算符两侧都加了空格,那么你也应该如此.如果现有的注释用井号组成了包围框,那么你的注释也应如此.
 
-有代码风格指南的目的是有一个变成的共识,这样人们能够集中在内容而非形式上.我们将通用的代码风格指南公布与此这样人们就能了解这个共识(译者:有巴别塔的意味.)但是各自的代码风格也很重要.如果你添加的代码与原有代码看起来完全不一致,就会打乱读者的阅读节奏.避免这样.
+有代码风格指南的目的是有一个编程的共识,这样人们能够集中在内容而非形式上.我们将通用的代码风格指南公布于此这样人们就能了解这个共识(译者:有巴别塔的意味.)但是各自的代码风格也很重要.如果你添加的代码与原有代码看起来完全不一致,就会打乱读者的阅读节奏.避免这样.
